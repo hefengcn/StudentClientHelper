@@ -23,25 +23,59 @@ import java.util.Objects;
 public class MyReceiver extends BroadcastReceiver {
 
     private static final String TAG = "MyReceiver";
+    public static final String ACTION_CONTENT_PUSH = "com.lenovo.smartedu.action.CONTENT_PUSH";
+    public static final String EDU_COURSE = "101";
+    public static final String ORAL_TRAINING = "0";
+    public static final String ACTION_CONTENT_FEEDBACK = "com.lenovo.smartedu.action.CONTENT_FEEDBACK";
+
+    public static final String ACTION_OPEN_COURSE = "com.tablet.smartedu.action.OPEN_COURSE";
 
     @Override
     public void onReceive(Context context, Intent intent) {
-        if (intent.getAction() != null && intent.getAction().equals("com.lenovo.smartedu.action.CONTENT_PUSH")) {
+        if (Objects.equals(intent.getAction(), ACTION_CONTENT_PUSH)) {
             String type = intent.getStringExtra("type");
-            if (Objects.equals(type, "101") | Objects.equals(type, "0")) {
+            if (Objects.equals(type, EDU_COURSE) || Objects.equals(type, ORAL_TRAINING)) {
                 String content = intent.getStringExtra("content");
                 sendNotification(context, type, content);
             }
-        } else if (intent.getAction() != null && intent.getAction().equals("com.tablet.smartedu.action.CONTENT_PUSH")) {
-            Log.d(TAG, "onReceive: Action =" + intent.getAction());
+        } else if (Objects.equals(intent.getAction(), ACTION_OPEN_COURSE)) {
+            Log.d(TAG, "onReceive: " + ACTION_OPEN_COURSE
+                    + "\n type: " + intent.getStringExtra("type")
+                    + "\n content: " + intent.getStringExtra("content"));
             pushOutLeftScreen();
-            sendFeedback(context);
+            intent.getStringExtra("type");
+            intent.getStringExtra("content");
+            sendFeedback(context, getCode(intent));
         }
     }
 
-    private void sendFeedback(Context context) {
-        Intent intent = new Intent("com.lenovo.smartedu.action.CONTENT_FEEDBACK");
-        intent.putExtra("code", "english");
+    private String getCode(Intent intent) {
+        String type = intent.getStringExtra("type");
+
+        String code = "";
+        if (Objects.equals(type, ORAL_TRAINING)) {
+            code = "english";
+        } else if (Objects.equals(type, EDU_COURSE)) {
+            String content = intent.getStringExtra("content");
+            try {
+                JSONObject jsonObject = null;
+                if (content != null) {
+                    jsonObject = new JSONObject(content);
+                }
+                if (jsonObject != null) {
+                    code = jsonObject.getString("code");
+                }
+            } catch (JSONException e) {
+                e.printStackTrace();
+            }
+        }
+        return code;
+    }
+
+    private void sendFeedback(Context context, String code) {
+        Log.d(TAG, "sendFeedback: " + ACTION_CONTENT_FEEDBACK + " code:" + code);
+        Intent intent = new Intent(ACTION_CONTENT_FEEDBACK);
+        intent.putExtra("code", code);
         context.sendBroadcast(intent);
     }
 
@@ -77,7 +111,7 @@ public class MyReceiver extends BroadcastReceiver {
 
 
     private void sendNotification(Context context, String type, String content) {
-        Intent intent = new Intent("com.tablet.smartedu.action.CONTENT_PUSH");
+        Intent intent = new Intent(ACTION_OPEN_COURSE);
         intent.putExtra("type", type);
         intent.putExtra("content", content);
         PendingIntent pendingIntent = PendingIntent.getBroadcast(context, 1, intent, PendingIntent.FLAG_UPDATE_CURRENT);
@@ -91,12 +125,6 @@ public class MyReceiver extends BroadcastReceiver {
             }
         }
 
-        try {
-            JSONObject json = new JSONObject(content);
-            json.getString("name");
-        } catch (JSONException e) {
-            e.printStackTrace();
-        }
         NotificationCompat.Builder builder = new NotificationCompat.Builder(context, "Id");
         builder.setSmallIcon(R.mipmap.ic_launcher)
                 .setContentTitle(type)

@@ -26,7 +26,7 @@
             android:exported="true">
             <intent-filter>
                 <action android:name="com.lenovo.smartedu.action.CONTENT_PUSH" />
-                <action android:name="com.tablet.smartedu.action.CONTENT_PUSH" />
+                <action android:name="com.tablet.smartedu.action.OPEN_COURSE" />
             </intent-filter>
         </receiver>
     </application>
