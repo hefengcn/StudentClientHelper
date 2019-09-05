@@ -7,6 +7,7 @@ import android.app.PendingIntent;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
+import android.graphics.BitmapFactory;
 import android.os.Build;
 import android.util.Log;
 
@@ -116,6 +117,21 @@ public class MyReceiver extends BroadcastReceiver {
         intent.putExtra("content", content);
         PendingIntent pendingIntent = PendingIntent.getBroadcast(context, 1, intent, PendingIntent.FLAG_UPDATE_CURRENT);
 
+        String contentTitle = "";
+        String contentText = "";
+        if (type.equals(EDU_COURSE)) {
+            contentTitle = "学科视频";
+            String lessonName = "";
+            try {
+                lessonName = new JSONObject(content).getString("name");
+            } catch (JSONException e) {
+                e.printStackTrace();
+            }
+            contentText = "妈妈向你推送了“" + lessonName + "”的学科视频，点击马上开始观看。";
+        } else if (type.equals(ORAL_TRAINING)) {
+            contentTitle = "英语口训";
+            contentText = "妈妈向你发起了英语口训，点击马上开始训练。";
+        }
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             NotificationChannel channel = new NotificationChannel("Id", "Name", NotificationManager.IMPORTANCE_HIGH);
@@ -127,9 +143,12 @@ public class MyReceiver extends BroadcastReceiver {
 
         NotificationCompat.Builder builder = new NotificationCompat.Builder(context, "Id");
         builder.setSmallIcon(R.mipmap.ic_launcher)
-                .setContentTitle(type)
-                .setContentText(content)
-                .setContentIntent(pendingIntent);
+                .setLargeIcon(BitmapFactory.decodeResource(context.getResources(), R.mipmap.ic_launcher))
+                .setContentTitle(contentTitle)
+                .setContentText(contentText)
+                .setStyle(new NotificationCompat.BigTextStyle().bigText(contentText))
+                .setContentIntent(pendingIntent)
+                .addAction(R.drawable.ic_snooze, context.getString(R.string.study), pendingIntent);
         Notification notification = builder.build();
 
         NotificationManagerCompat notificationManager = NotificationManagerCompat.from(context);

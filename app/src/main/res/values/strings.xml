@@ -1,3 +1,4 @@
 <resources>
     <string name="app_name">StudentClientHelper</string>
+    <string name="study">Study</string>
 </resources>
